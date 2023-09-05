@@ -27,7 +27,10 @@ async def create_person(person: models.Person, response: Response):
 
         await cache.insert_apelido(person.apelido)
         await database.insert_person(person_id, **person.model_dump())
-        await cache.insert_person(str(person_id),models.PersonResponse(id = str(person_id), **person.model_dump()))
+        await cache.insert_person(
+            str(person_id),
+            models.PersonResponse(id=str(person_id), **person.model_dump()),
+        )
         response.headers["location"] = f"/pessoas/{person_id}"
         return {"id": str(person_id)}
     except ValueError:
@@ -42,7 +45,7 @@ async def read_person(id: str):
         return person
     elif person_data := await database.find_by_id(id):
         person = models.PersonResponse.from_db(**person_data)
-        await cache.insert_person(id,person)
+        await cache.insert_person(id, person)
         return person
     else:
         raise HTTPException(status_code=404, detail="Person not found")
@@ -53,8 +56,10 @@ async def search_people(term: str = Query(..., alias="t")):
     if people := await cache.get_person_term(term):
         return people
     people = await database.find_by_term(term)
-    people_response = [models.PersonResponse.from_db(**person_data) for person_data in people]
-    await cache.insert_person_term(term,people_response)
+    people_response = [
+        models.PersonResponse.from_db(**person_data) for person_data in people
+    ]
+    await cache.insert_person_term(term, people_response)
     return people_response
 
 
