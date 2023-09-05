@@ -2,4 +2,3 @@ __pycache__
 .pytest_cache
 rinha/
 venv/
-apis.sock/
