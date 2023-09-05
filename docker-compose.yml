@@ -1,0 +1,94 @@
+version: '3.5'
+services:
+  api1:
+    build:
+      context: ./app
+    hostname: api1
+    depends_on:
+      db: 
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: '0.5GB'
+    command: "uvicorn app.main:app --loop uvloop --uds /tmp/api1.sock --proxy-headers --no-access-log"
+    environment:
+      - DB_URL = "postgresql://user:pass@db:5432/rinha"
+      - DB_POOL = 200
+    volumes:
+      - ./apis.sock:/tmp/
+    networks:
+      - appnet
+
+  api2:
+    build:
+      context: ./app
+    hostname: api2
+    depends_on:
+      db: 
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: '0.5GB'
+    command: "uvicorn app.main:app --loop uvloop --uds /tmp/api2.sock --proxy-headers --no-access-log"
+    environment:
+      - DB_URL = "postgresql://user:pass@db:5432/rinha"
+      - DB_POOL = 200
+    volumes:
+      - ./apis.sock:/tmp/
+    networks:
+      - appnet
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./apis.sock:/tmp/
+    depends_on:
+      api1:
+        condition: service_started
+      api2: 
+        condition: service_started
+    ulimits:
+      nproc: 1000000
+      nofile:
+        soft: 1000000
+        hard: 1000000
+    ports:
+      - "9999:9999"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: '0.3GB'
+    networks:
+      - appnet
+
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: rinha
+    volumes:
+      - ./sql.sql:/docker-entrypoint-initdb.d/postgresql.conf
+    deploy:
+      resources:
+        limits:
+          cpus: '0.4'
+          memory: '1.7GB'
+    command: postgres -c 'max_connections=450'
+    healthcheck:
+        test: ["CMD-SHELL", "pg_isready --dbname=rinha --username=user"]
+        interval: 2s
+        timeout: 2s
+        retries: 30
+    networks:
+      - appnet
+  
+networks:
+  appnet:
+    driver: bridge
