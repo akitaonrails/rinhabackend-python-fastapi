@@ -10,7 +10,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: '0.4'
           memory: '0.5GB'
     command: "uvicorn app.main:app --loop uvloop --uds /tmp/api1.sock --proxy-headers --no-access-log"
     environment:
@@ -32,7 +32,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: '0.4'
           memory: '0.5GB'
     command: "uvicorn app.main:app --loop uvloop --uds /tmp/api2.sock --proxy-headers --no-access-log"
     environment:
@@ -80,7 +80,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.35'
+          cpus: '0.575'
           memory: '1.6GB'
     command: postgres -c 'max_connections=450'
     healthcheck:
@@ -101,7 +101,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.05'
+          cpus: '0.025'
           memory: '0.1GB'
   
 networks:
