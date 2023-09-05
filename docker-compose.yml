@@ -14,9 +14,9 @@ services:
           memory: '0.5GB'
     command: "uvicorn app.main:app --loop uvloop --uds /tmp/api1.sock --proxy-headers --no-access-log"
     environment:
-      - DB_URL = "postgresql://user:pass@db:5432/rinha"
+      - DB_URL = postgresql://user:pass@db:5432/rinha
       - DB_POOL = 200
-      - CACHE_URL= "redis://redis:6379" 
+      - CACHE_URL= redis://redis:6379
     volumes:
       - socks:/tmp
     networks:
@@ -36,9 +36,9 @@ services:
           memory: '0.5GB'
     command: "uvicorn app.main:app --loop uvloop --uds /tmp/api2.sock --proxy-headers --no-access-log"
     environment:
-      - DB_URL = "postgresql://user:pass@db:5432/rinha"
+      - DB_URL = postgresql://user:pass@db:5432/rinha
       - DB_POOL = 200
-      - CACHE_URL= "redis://redis:6379" 
+      - CACHE_URL= redis://redis:6379
     volumes:
       - socks:/tmp
     networks:
