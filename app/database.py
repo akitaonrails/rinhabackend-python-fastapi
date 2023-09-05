@@ -52,7 +52,6 @@ async def create_tables():
         );
 
         CREATE INDEX IF NOT EXISTS idx_pessoas_searchable ON pessoas USING gist(searchable gist_trgm_ops);
-        CREATE UNIQUE INDEX IF NOT EXISTS pessoas_apelido_index ON pessoas(apelido);
         """
         )
 
