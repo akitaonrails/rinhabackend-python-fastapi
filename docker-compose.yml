@@ -10,8 +10,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.4'
-          memory: '0.5GB'
+          cpus: '0.35'
+          memory: '0.6GB'
     command: "uvicorn app.main:app --loop uvloop --uds /tmp/api1.sock --proxy-headers --no-access-log"
     environment:
       - DB_URL = postgresql://user:pass@db:5432/rinha
@@ -32,8 +32,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.4'
-          memory: '0.5GB'
+          cpus: '0.35'
+          memory: '0.6GB'
     command: "uvicorn app.main:app --loop uvloop --uds /tmp/api2.sock --proxy-headers --no-access-log"
     environment:
       - DB_URL = postgresql://user:pass@db:5432/rinha
@@ -80,9 +80,9 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.575'
-          memory: '1.6GB'
-    command: postgres -c 'max_connections=450'
+          cpus: '0.7'
+          memory: '1.5GB'
+    command: postgres -c 'max_connections=450' -c 'shared_buffers=512MB'
     healthcheck:
         test: ["CMD-SHELL", "pg_isready --dbname=rinha --username=user"]
         interval: 2s
@@ -90,19 +90,6 @@ services:
         retries: 30
     networks:
       - appnet
-  
-  redis:
-    image: redis:latest
-    ports:
-      - "6379:6379"
-    networks:
-      - appnet
-    command: redis-server --save "" --appendonly no --maxclients 20000
-    deploy:
-      resources:
-        limits:
-          cpus: '0.025'
-          memory: '0.1GB'
   
 networks:
   appnet:

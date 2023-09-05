@@ -3,33 +3,34 @@ from fastapi.exceptions import RequestValidationError
 from typing import List
 from uuid import uuid4
 import app.database as database
-import app.cache as cache
 import app.models as models
+import cachetools
 
 
 app = FastAPI()
 
+cache_apelido = cachetools.TTLCache(maxsize=50000,ttl=600)
+cache_id = cachetools.TTLCache(maxsize=50000,ttl=600)
+cache_termo = cachetools.TTLCache(maxsize=20000,ttl=60)
 
 @app.on_event("startup")
 async def startup_event():
     await database.connect()
-    await cache.connect()
 
 
 @app.post("/pessoas", status_code=201)
 async def create_person(person: models.Person, response: Response):
     try:
-        if await cache.apelido_exist(person.apelido):
+        if cache_apelido.get(person.apelido):
+            raise ValueError
+        if await database.exists_by_apelido(person.apelido):
             raise ValueError
 
         person_id = str(uuid4())
 
-        await cache.insert_apelido(person.apelido)
         await database.insert_person(person_id, **person.model_dump())
-        await cache.insert_person(
-            person_id,
-            models.PersonResponse(id=person_id, **person.model_dump()),
-        )
+        cache_id[person_id] = {"id":person_id, **person.model_dump()}
+        cache_apelido[person.apelido] = 1
         response.headers["location"] = f"/pessoas/{person_id}"
         return 
     except ValueError:
@@ -40,26 +41,26 @@ async def create_person(person: models.Person, response: Response):
 
 @app.get("/pessoas/{id}", response_model=models.PersonResponse)
 async def read_person(id: str):
-    if person := await cache.get_person(id):
+    if person:=cache_id.get(id):
         return person
-    # elif person_data := await database.find_by_id(id):
-    #     person = models.PersonResponse.from_db(**person_data)
-    #     await cache.insert_person(id, person)
-    #     return person
+    if person_data := await database.find_by_id(id):
+        person = models.PersonResponse.from_db(**person_data)
+        cache_id[person.id] = person
+        return person
     else:
         raise HTTPException(status_code=404)
 
 
 @app.get("/pessoas", response_model=List[models.PersonResponse])
 async def search_people(term: str = Query(..., alias="t")):
-    if people := await cache.get_person_term(term):
+    if people:=cache_termo.get(term):
         return people
-    people = await database.find_by_term(term)
-    people_response = [
-        models.PersonResponse.from_db(**person_data) for person_data in people
+    people_dto = await database.find_by_term(term)
+    people = [
+        models.PersonResponse.from_db(**person_data) for person_data in people_dto
     ]
-    await cache.insert_person_term(term, people_response)
-    return people_response
+    cache_termo[term] = people
+    return people
 
 
 @app.get("/contagem-pessoas")
