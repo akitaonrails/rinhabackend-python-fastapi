@@ -1,7 +1,5 @@
 ## TODO
 background task for bulk insert + redis queue  
-redis cache 
-
 
 ## HOW TO RUN
 To dev:  
