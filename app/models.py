@@ -1,5 +1,4 @@
-from pydantic import BaseModel, Field, validator
-from uuid import UUID
+from pydantic import BaseModel, Field, validator, UUID4
 from typing import List, Optional
 from datetime import date
 import json
@@ -11,7 +10,7 @@ class Person(BaseModel):
     stack: Optional[List[str]]
         
 class PersonResponse(Person):
-    id: UUID
+    id: UUID4
         
     @classmethod
     def from_db(cls, id, apelido, nome, nascimento, stack):

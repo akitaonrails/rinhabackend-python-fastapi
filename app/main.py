@@ -1,6 +1,5 @@
 from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
 from typing import List
 from uuid import uuid4
 import app.database as database
@@ -23,32 +22,32 @@ async def create_person(person: models.Person, response: Response):
         if await cache.apelido_exist(person.apelido):
             raise ValueError
 
-        person_id = uuid4()
+        person_id = str(uuid4())
 
         await cache.insert_apelido(person.apelido)
         await database.insert_person(person_id, **person.model_dump())
         await cache.insert_person(
-            str(person_id),
-            models.PersonResponse(id=str(person_id), **person.model_dump()),
+            person_id,
+            models.PersonResponse(id=person_id, **person.model_dump()),
         )
         response.headers["location"] = f"/pessoas/{person_id}"
-        return {"id": str(person_id)}
+        return 
     except ValueError:
-        raise HTTPException(status_code=422, detail="Apelido already exists")
-    except Exception as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        raise HTTPException(status_code=422)
+    except Exception:
+        raise HTTPException(status_code=422)
 
 
 @app.get("/pessoas/{id}", response_model=models.PersonResponse)
 async def read_person(id: str):
     if person := await cache.get_person(id):
         return person
-    elif person_data := await database.find_by_id(id):
-        person = models.PersonResponse.from_db(**person_data)
-        await cache.insert_person(id, person)
-        return person
+    # elif person_data := await database.find_by_id(id):
+    #     person = models.PersonResponse.from_db(**person_data)
+    #     await cache.insert_person(id, person)
+    #     return person
     else:
-        raise HTTPException(status_code=404, detail="Person not found")
+        raise HTTPException(status_code=404)
 
 
 @app.get("/pessoas", response_model=List[models.PersonResponse])
@@ -71,4 +70,4 @@ async def count_people():
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, handler):
-    return JSONResponse({"detail": "Bad Request"}, status_code=400)
+    return Response(status_code=400)
