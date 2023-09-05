@@ -4,8 +4,6 @@ import logging
 from fastapi import FastAPI
 import json
 
-app = FastAPI()
-
 logger = logging.getLogger("uvicorn")
 
 DATABASE_URL = os.getenv("DB_URL", "postgresql://user:pass@db:5432/rinha")
