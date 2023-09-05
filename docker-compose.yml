@@ -76,7 +76,7 @@ services:
       POSTGRES_PASSWORD: pass
       POSTGRES_DB: rinha
     volumes:
-      - ./sql.sql:/docker-entrypoint-initdb.d/postgresql.conf
+      - ./postgresql.conf:/docker-entrypoint-initdb.d/postgresql.conf
     deploy:
       resources:
         limits:
