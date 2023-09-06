@@ -1,0 +1,23 @@
+version: '3.5'
+services:
+  db-dev:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: rinha
+    volumes:
+      - ./postgresql.conf:/docker-entrypoint-initdb.d/postgresql.conf
+    ports:
+      - "5432:5432"
+
+  redis-dev:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    command: redis-server --save "" --appendonly no --maxclients 20000
+    deploy:
+      resources:
+        limits:
+          cpus: '0.05'
+          memory: '0.1GB'
